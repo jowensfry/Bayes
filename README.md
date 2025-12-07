@@ -118,7 +118,8 @@ implemented via:
 ```python
 roberts_scaled_cov(cov_base, d)
 ```
-This ensures ~25% acceptance in high dimensions.
+This ensures ~25% acceptance in high dimensions. 
+Statist. Sci. 16(4): 351-367 (November 2001). DOI: 10.1214/ss/1015346320
 
 5.3 Cholesky Factor
 
