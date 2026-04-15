@@ -3,7 +3,7 @@
 import numpy as np
 
 def nld_prior(params_vals, arguments):
-    # arguments = (params0, inv_cov)   # inv_cov = Σ^{-1}
+    # arguments = (params0, cov)   # cov = Σ^{1}
     params0, cov_matrix = arguments
     d = len(params_vals)
     if cov_matrix.shape != (d, d):
@@ -14,7 +14,7 @@ def nld_prior(params_vals, arguments):
     except np.linalg.LinAlgError:
         # Add tiny jitter to diagonal and try again
         jitter = 1e-8 * np.eye(d)
-        precision = np.linalg.inv(cov_matrix + jitter)
+        precision = np.linalg.inv(cov_matrix + jitter) # inv_cov = Σ^{-1}
 
     # Quadratic form mu^T Σ⁻¹ mu
     mu = params_vals - params0
