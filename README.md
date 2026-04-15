@@ -425,7 +425,7 @@ Base TALYS model tables are stored in:
 
 Talys_Models/
 
-These files contain tabulated predictions that are modified during sampling.
+These files contain tabulated predictions that are modified during sampling. The tables should be made with default TALYS parameters for both NLD and gamma SF.
 
 ### Diagnostics
 
