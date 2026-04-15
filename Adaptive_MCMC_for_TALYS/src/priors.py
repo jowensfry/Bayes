@@ -4,35 +4,41 @@ import numpy as np
 
 def nld_prior(params_vals, arguments):
     # arguments = (params0, inv_cov)   # inv_cov = Σ^{-1}
-    params0, inv_cov = arguments
+    params0, cov_matrix = arguments
+    d = len(params_vals)
+    if cov_matrix.shape != (d, d):
+        raise ValueError("NLD_prior: cov_matrix shape mismatch")
+    # Invert covariance to get precision (Σ⁻¹), with a tiny jitter if needed
+    try:
+        precision = np.linalg.inv(cov_matrix)
+    except np.linalg.LinAlgError:
+        # Add tiny jitter to diagonal and try again
+        jitter = 1e-8 * np.eye(d)
+        precision = np.linalg.inv(cov_matrix + jitter)
 
-    p_limit = 5
+    # Quadratic form mu^T Σ⁻¹ mu
+    mu = params_vals - params0
+    quad = float(mu @ (precision @ mu))
+
+    # log determinant of covariance Σ
+    sign, logdet_cov = np.linalg.slogdet(cov_matrix)
+    if sign <= 0:
+        # If cov_matrix is not Positive Definite, return impossible
+        return -np.inf
+
+    # Gaussian log density (correct form using covariance Σ)
+    # log p = -0.5 * ( d*log(2π) + logdet(Σ) + mu^T Σ⁻¹ mu )
+    log_prior = -0.5 * (d * np.log(2.0 * np.pi) + logdet_cov + quad)
+    p_limit = 10
     c_limit = 10
 
     # ----- HARD BOUNDARIES / HEAVYSIDE FUNCTIONS -----
     # If outside allowed region → impossible → log-prior = -∞
     if (abs(params_vals[0]) > p_limit or
         abs(params_vals[1]) > c_limit):
-	#or params_vals[0] + min(data[0]) > max(data[0]) or
-        #params_vals[0] + min(data[0]) < 0
         return -np.inf
     
-    # ----- GAUSSIAN LOG PRIOR -----
-    mu = np.asarray(params_vals) - np.asarray(params0)
-    d = len(mu)
-
-    # Quadratic form
-    quad = mu @ (inv_cov @ mu)
-
-    # log(det(inv_cov)) in a stable way
-    sign, logdet_inv = np.linalg.slogdet(inv_cov)
-    if sign <= 0:
-        return -np.inf   # inv_cov must be positive definite
-
-    # Log probability of multivariate Gaussian
-    log_prior = -0.5 * (d * np.log(2*np.pi) - logdet_inv + quad)
-
-    return log_prior
+    return float(log_prior)
 
 
 
@@ -238,4 +244,3 @@ def check_prior(prior, params_current, prior_arguments):
     # ===========================================================
     else:
         raise ValueError("Invalid prior format.")
-
